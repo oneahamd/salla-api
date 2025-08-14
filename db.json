@@ -1,0 +1,528 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "title": "Galaxy S24 Ultra",
+      "images": [
+        "https://image-us.samsung.com/us/smartphones/galaxy-s24/cell-phone-deals/01112024/EUREKA-136_E3_Exclusive_Short_Card_260x260.png",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_gray.jpg",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_black.jpg",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_violet.jpg",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_yellow.jpg"
+      ],
+      "price": 1000,
+      "description": "The Galaxy S24 Ultra features a cutting-edge design with a powerful Snapdragon 8 Gen 3 processor, an advanced 200MP camera system with 100x Space Zoom, and a vibrant 6.8-inch Dynamic AMOLED 2X display. Ideal for photography enthusiasts and power users, it includes an S Pen and Galaxy AI features.",
+      "vendor": "samsung",
+      "specs": {
+        "display": "6.8-inch Dynamic AMOLED 2X, 1440 x 3120 pixels, 120Hz, 2600 nits",
+        "processor": "Qualcomm Snapdragon 8 Gen 3 (4 nm)",
+        "camera": "200MP wide, 50MP periscope telephoto (5x), 10MP telephoto (3x), 12MP ultrawide; 12MP front",
+        "battery": "5000 mAh, 45W wired, 15W wireless, 4.5W reverse wireless",
+        "os": "Android 14, One UI 6.1.1, 7 years of updates",
+        "build": "Titanium frame, Gorilla Glass Armor, IP68",
+        "additional": "S Pen, Wi-Fi 7, UWB, Galaxy AI features"
+      },
+      "favorite": true,
+      "discount": 100,
+      "options": [
+        {
+          "name": "Style",
+          "inputType": "Checkbox",
+          "values": ["normal", "Pro", "Pro Max", "Pro Plus", "Ultra", "Plus"]
+        },
+        {
+          "name": "Storage",
+          "inputType": "Segmented",
+          "values": ["512GB | 12GB", "512GB | 8GB", "256GB | 8GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": [
+            "Floral White",
+            "Dim Gray",
+            "Light Pink",
+            "Azure",
+            "Blanched Almond",
+            "Dark Olive Green",
+            "Lavender Blush",
+            "Light Golden Rod Yellow"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "values": { "Style": "Ultra", "Color": "Floral White", "Size": "512GB | 12GB" },
+          "price": 0
+        },
+        {
+          "values": { "Style": "Ultra", "Color": "Floral White", "Size": "512GB | 8GB" },
+          "price": 150
+        },
+        {
+          "values": { "Style": "Ultra", "Color": "Floral White", "Size": "256GB | 8GB" },
+          "price": 259,
+          "images": ["https://example.com/gold-256.jpg"]
+        },
+        {
+          "values": { "Style": "Ultra", "Size": "256GB | 8GB", "Color": "Floral White" },
+          "price": 1259,
+          "images": ["https://example.com/gold-256.jpg"]
+        }
+      ]
+    },
+
+    {
+      "id": "2",
+      "title": "Galaxy Z Fold5",
+      "images": [
+        "https://image-us.samsung.com/SamsungUS/home/shop/all-deals/cell-phone-deals/05242024/SDSAC-7608_Zfold5_DSE_Weekend_Short_Card_260x260.png"
+      ],
+      "price": 1000,
+      "description": "The Galaxy Z Fold5 offers a revolutionary foldable display, combining a smartphone and tablet experience in one device. Perfect for multitasking and entertainment.",
+      "vendor": "samsung",
+      "favorite": false,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Radio",
+          "values": ["128GB | 6GB", "256GB | 6GB", "512GB | 6GB"]
+        },
+        {
+          "name": "Options",
+          "inputType": "Stepper",
+          "values": ["1", "2", "3", "4", "5", "6", "7"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": [
+            "Floral White",
+            "Dim Gray",
+            "Light Pink",
+            "Azure",
+            "Blanched Almond",
+            "Dark Olive Green",
+            "Lavender Blush",
+            "Light Golden Rod Yellow"
+          ]
+        }
+      ],
+      "variants": [
+        { "values": { "Size": "128GB | 6GB" }, "price": 0 },
+        { "values": { "Size": "256GB | 6GB" }, "price": 150 },
+        { "values": { "Size": "512GB | 6GB" }, "price": 259 },
+        { "values": { "Size": "128GB | 6GB", "Color": "Floral White" }, "price": 0 },
+        { "values": { "Size": "256GB | 6GB", "Color": "Floral White" }, "price": 150 },
+        { "values": { "Size": "512GB | 6GB", "Color": "Floral White" }, "price": 259 },
+        {
+          "values": { "Size": "128GB | 6GB", "Color": "Floral White", "Options": "1" },
+          "price": 0
+        },
+        {
+          "values": { "Size": "256GB | 6GB", "Color": "Floral White", "Options": "2" },
+          "price": 100
+        },
+        {
+          "values": { "Size": "512GB | 6GB", "Color": "Floral White", "Options": "3" },
+          "price": 200
+        },
+        {
+          "values": { "Size": "128GB | 6GB", "Color": "Floral White", "Options": "4" },
+          "price": 300
+        },
+        {
+          "values": { "Size": "256GB | 6GB", "Color": "Floral White", "Options": "5" },
+          "price": 400
+        },
+        {
+          "values": { "Size": "512GB | 6GB", "Color": "Floral White", "Options": "6" },
+          "price": 500
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "iPhone 16 Pro",
+      "price": 1100,
+      "images": ["https://example.com/iphone16pro"],
+      "description": "The Galaxy Z Flip5 combines style and functionality with its unique flip design. It offers a compact form factor without compromising on performance or display quality.",
+      "vendor": "apple",
+      "favorite": true,
+      "options": [
+        {
+          "name": "Style",
+          "inputType": "RadioSheet",
+          "values": ["iPhone 16 Pro", "iPhone 16 Pro Max"]
+        },
+        {
+          "name": "Size",
+          "inputType": "SegmentedSheet",
+          "values": ["1TB", "512GB", "256GB", "128GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "SwatchesSheet",
+          "values": [
+            "Aquamarine",
+            "Aqua",
+            "Azure",
+            "Blanched Almond",
+            "Dark Olive Green",
+            "Lavender Blush",
+            "Light Golden Rod Yellow"
+          ]
+        }
+      ],
+      "variants": []
+    },
+    {
+      "id": "4",
+      "title": "Galaxy S24+",
+      "images": [
+        "https://image-us.samsung.com/SamsungUS/home/shop/all-deals/cell-phone-deals/05262024/SDSAC-7525-S24P-Screen-Protector-ADP-ShortCard-260x260.png"
+      ],
+      "price": 789,
+      "description": "The Galaxy S24+ provides a premium experience at a more affordable price. It features a large display, powerful performance, and a versatile camera system.",
+      "vendor": "samsung",
+      "favorite": true,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Segmented",
+          "values": ["256GB | 6GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Alice Blue", "Aqua", "Antique White", "Beige"]
+        }
+      ],
+      "variants": [
+        { "values": { "Size": "256GB | 6GB", "Color": "Alice Blue" }, "price": 111 },
+        { "values": { "Size": "256GB | 6GB", "Color": "Aqua" }, "price": 222 },
+        { "values": { "Size": "256GB | 6GB", "Color": "Antique White" }, "price": 333 },
+        { "values": { "Size": "256GB | 6GB", "Color": "Beige" }, "price": 444 }
+      ]
+    },
+
+    {
+      "id": "5",
+      "title": "Galaxy A35 5G",
+      "images": [
+        "https://image-us.samsung.com/SamsungUS/home/shop/all-deals/cell-phone-deals/04172024/SDSAC-7376-A35-ADP-ShortCard-260x260.png"
+      ],
+      "price": 499.99,
+      "description": "The Galaxy A35 5G offers a balance of performance and affordability, with 5G connectivity, a large display, and a capable camera system.",
+      "vendor": "samsung",
+      "favorite": false,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Segmented",
+          "values": ["256GB | 6GB", "256GB | 8GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Gainsboro", "Antique White", "Blanched Almond", "Light Golden Rod Yellow"]
+        }
+      ],
+      "variants": []
+    },
+    {
+      "id": "6",
+      "title": "Galaxy A35 5G",
+      "images": [
+        "https://image-us.samsung.com/SamsungUS/home/shop/all-deals/cell-phone-deals/04172024/SDSAC-7376-A35-ADP-ShortCard-260x260.png"
+      ],
+      "price": 799.99,
+      "description": "The Galaxy A35 5G combines a premium design with mid-range performance, offering a great user experience with a high-resolution display and solid build quality.",
+      "vendor": "samsung",
+      "favorite": false,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Segmented",
+          "values": ["256GB | 6GB", "256GB | 8GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Light Sea Green", "Antique White", "Aqua", "Beige"]
+        }
+      ],
+      "variants": []
+    },
+    {
+      "id": "7",
+      "title": "OnePlus Nord 3 CE",
+      "images": ["https://example.com/oneplusnord3ce"],
+      "price": 299.99,
+      "description": "A budget-friendly option from OnePlus, delivering good performance and a smooth user experience at a competitive price.",
+      "vendor": "oneplus",
+      "favorite": false,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Segmented",
+          "values": ["128GB | 6GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Turquoise", "Medium Aqua Marine"]
+        }
+      ],
+      "variants": []
+    },
+    {
+      "id": "8",
+      "title": "OnePlus Edge (2024)",
+      "images": ["https://example.com/motorolaedge2024"],
+      "price": 479.99,
+      "description": "A phone with a focus on display quality, featuring a large pOLED display with a high refresh rate.",
+      "vendor": "oneplus",
+      "favorite": false,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Segmented",
+          "values": ["128GB | 6GB", "256GB | 6GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Antique White", "Light Green", "Alice Blue", "Aqua"]
+        }
+      ],
+      "variants": []
+    },
+    {
+      "id": "9",
+      "title": "Galaxy S24+ No Style No Color",
+      "images": [
+        "https://image-us.samsung.com/SamsungUS/home/shop/all-deals/cell-phone-deals/05262024/SDSAC-7525-S24P-Screen-Protector-ADP-ShortCard-260x260.png"
+      ],
+      "price": 1099.99,
+      "description": "The latest flagship from Apple, featuring a powerful A17 Bionic chip, a stunning Super Retina XDR display, and a pro-grade camera system.",
+      "vendor": "samsung",
+      "favorite": false,
+      "options": [
+        {
+          "name": "Size",
+          "inputType": "Segmented",
+          "values": ["256GB | 6GB", "256GB | 8GB"]
+        }
+      ],
+      "variants": []
+    },
+    {
+      "id": "10",
+      "title": "Galaxy S24 Ultra Without Variants",
+      "images": [
+        "https://image-us.samsung.com/us/smartphones/galaxy-s24/cell-phone-deals/01112024/EUREKA-136_E3_Exclusive_Short_Card_260x260.png",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_gray.jpg",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_black.jpg",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_violet.jpg",
+        "https://images.samsung.com/ps/smartphones/galaxy-s24-ultra/buy/nonshop_yellow.jpg"
+      ],
+      "price": 1000,
+      "description": "The Galaxy S24 Ultra features a cutting-edge design with a powerful processor, an advanced camera system, and a vibrant AMOLED display. Ideal for photography enthusiasts and power users.",
+      "vendor": "samsung",
+      "favorite": true,
+      "discount": 100
+    },
+
+    {
+      "id": "13",
+      "title": "Apple iPhone 15 Pro",
+      "images": [
+        "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-blacktitanium?wid=5120&hei=2880&fmt=p-jpg",
+        "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-whitetitanium?wid=5120&hei=2880&fmt=p-jpg",
+        "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-bluetitanium?wid=5120&hei=2880&fmt=p-jpg",
+        "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg"
+      ],
+      "price": 999.99,
+      "description": "The iPhone 15 Pro features a powerful A17 Pro chip, a 6.1-inch Super Retina XDR display, and a pro-grade camera system with 3x optical zoom. Its titanium frame offers a lightweight yet durable design, perfect for premium performance.",
+      "vendor": "apple",
+      "favorite": false,
+      "specs": {
+        "display": "6.1-inch Super Retina XDR OLED, 1179 x 2556 pixels, 120Hz, 2000 nits",
+        "processor": "Apple A17 Pro (3 nm)",
+        "camera": "48MP wide, 12MP ultrawide, 12MP telephoto (3x); 12MP front",
+        "battery": "3274 mAh, 23W wired, 15W wireless (MagSafe/Qi2), 4.5W reverse wired",
+        "os": "iOS 17, upgradable to iOS 18.5",
+        "build": "Titanium frame, Ceramic Shield glass, IP68",
+        "additional": "Face ID, UWB, Emergency SOS via satellite, Action Button"
+      },
+      "options": [
+        {
+          "name": "Style",
+          "inputType": "Radio",
+          "values": ["iPhone 15 Pro"]
+        },
+        {
+          "name": "Storage",
+          "inputType": "Segmented",
+          "values": ["128GB | 8GB", "256GB | 8GB", "512GB | 8GB", "1TB | 8GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Black", "White", "Blue", "Silver"]
+        }
+      ],
+      "variants": [
+        {
+          "values": { "Style": "iPhone 15 Pro", "Color": "Black", "Storage": "128GB | 8GB" },
+          "price": 630.0,
+          "images": [
+            "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-blacktitanium?wid=5120&hei=2880&fmt=p-jpg"
+          ]
+        },
+        {
+          "values": { "Style": "iPhone 15 Pro", "Color": "Black", "Storage": "256GB | 8GB" },
+          "price": 1099.0,
+          "images": [
+            "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-blacktitanium?wid=5120&hei=2880&fmt=p-jpg"
+          ]
+        },
+        {
+          "values": { "Style": "iPhone 15 Pro", "Color": "White", "Storage": "256GB | 8GB" },
+          "price": 1099.0,
+          "images": [
+            "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-whitetitanium?wid=5120&hei=2880&fmt=p-jpg"
+          ]
+        },
+        {
+          "values": { "Style": "iPhone 15 Pro", "Color": "Blue", "Storage": "256GB | 8GB" },
+          "price": 1099.0,
+          "images": [
+            "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-bluetitanium?wid=5120&hei=2880&fmt=p-jpg"
+          ]
+        },
+        {
+          "values": { "Style": "iPhone 15 Pro", "Color": "Silver", "Storage": "256GB | 8GB" },
+          "price": 1099.0,
+          "images": [
+            "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-1inch-naturaltitanium?wid=5120&hei=2880&fmt=p-jpg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "title": "Google Pixel 7a",
+      "images": [
+        "https://lh3.googleusercontent.com/WQv3XjMHLk1c4cK3Sxt7M7y0g5p4u98V2s3LweY_wuW9s0pB_0Yq2j2iFVRbY0o6d1f7mL8hW8v1=s1000",
+        "https://lh3.googleusercontent.com/0QzQ7W8Y2s3LweY_wuW9s0pB_0Yq2j2iFVRbY0o6d1f7mL8hW8v1=s1000",
+        "https://lh3.googleusercontent.com/1QzQ7W8Y2s3LweY_wuW9s0pB_0Yq2j2iFVRbY0o6d1f7mL8hW8v1=s1000"
+      ],
+      "price": 499.99,
+      "description": "The Google Pixel 7a offers excellent camera performance with a 64MP main sensor, a clean Android experience, and reliable performance with the Google Tensor G2 chip, making it a great mid-range option.",
+      "vendor": "google",
+      "favorite": false,
+      "specs": {
+        "display": "6.1-inch OLED, 1080 x 2400 pixels, 90Hz, 429 ppi",
+        "processor": "Google Tensor G2 (5 nm)",
+        "camera": "64MP wide, 13MP ultrawide; 13MP front",
+        "battery": "4385 mAh, 18W wired, wireless charging",
+        "os": "Android 13, upgradable to Android 14",
+        "build": "Aluminum frame, Gorilla Glass 3, IP67",
+        "additional": "Stereo speakers, 7 years of OS updates"
+      },
+      "options": [
+        {
+          "name": "Storage",
+          "inputType": "Segmented",
+          "values": ["128GB | 8GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Black", "Blue", "Coral"]
+        }
+      ],
+      "variants": [
+        {
+          "values": { "Storage": "128GB | 8GB", "Color": "Black" },
+          "price": 499.99,
+          "images": [
+            "https://lh3.googleusercontent.com/WQv3XjMHLk1c4cK3Sxt7M7y0g5p4u98V2s3LweY_wuW9s0pB_0Yq2j2iFVRbY0o6d1f7mL8hW8v1=s1000"
+          ]
+        },
+        {
+          "values": { "Storage": "128GB | 8GB", "Color": "Blue" },
+          "price": 499.99,
+          "images": [
+            "https://lh3.googleusercontent.com/0QzQ7W8Y2s3LweY_wuW9s0pB_0Yq2j2iFVRbY0o6d1f7mL8hW8v1=s1000"
+          ]
+        },
+        {
+          "values": { "Storage": "128GB | 8GB", "Color": "Coral" },
+          "price": 499.99,
+          "images": [
+            "https://lh3.googleusercontent.com/1QzQ7W8Y2s3LweY_wuW9s0pB_0Yq2j2iFVRbY0o6d1f7mL8hW8v1=s1000"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "title": "Xiaomi 13 Pro",
+      "images": [
+        "https://i01.appmifile.com/webfile/globalimg/202212/1-BK.jpg",
+        "https://i01.appmifile.com/webfile/globalimg/202212/1-WT.jpg",
+        "https://i01.appmifile.com/webfile/globalimg/202212/1-GN.jpg"
+      ],
+      "price": 999.99,
+      "description": "The Xiaomi 13 Pro boasts a Snapdragon 8 Gen 2 processor, a 6.73-inch LTPO AMOLED display, and a Leica-branded triple camera system with a 50MP main sensor, offering premium performance and photography.",
+      "vendor": "xiaomi",
+      "favorite": false,
+      "specs": {
+        "display": "6.73-inch LTPO AMOLED, 1440 x 3200 pixels, 120Hz, 1900 nits",
+        "processor": "Qualcomm Snapdragon 8 Gen 2 (4 nm)",
+        "camera": "50MP wide, 50MP ultrawide, 50MP telephoto (3.2x); 32MP front",
+        "battery": "4820 mAh, 120W wired, 50W wireless, 10W reverse wireless",
+        "os": "Android 13, MIUI 14",
+        "build": "Ceramic or glass back, aluminum frame, IP68",
+        "additional": "Leica optics, Dolby Atmos, Wi-Fi 6E"
+      },
+      "options": [
+        {
+          "name": "Storage",
+          "inputType": "Segmented",
+          "values": ["256GB | 12GB", "512GB | 12GB"]
+        },
+        {
+          "name": "Color",
+          "inputType": "Swatches",
+          "values": ["Black", "White", "Green"]
+        }
+      ],
+      "variants": [
+        {
+          "values": { "Storage": "256GB | 12GB", "Color": "Black" },
+          "price": 999.99,
+          "images": ["https://i01.appmifile.com/webfile/globalimg/202212/1-BK.jpg"]
+        },
+        {
+          "values": { "Storage": "256GB | 12GB", "Color": "White" },
+          "price": 999.99,
+          "images": ["https://i01.appmifile.com/webfile/globalimg/202212/1-WT.jpg"]
+        },
+        {
+          "values": { "Storage": "256GB | 12GB", "Color": "Green" },
+          "price": 999.99,
+          "images": ["https://i01.appmifile.com/webfile/globalimg/202212/1-GN.jpg"]
+        },
+        {
+          "values": { "Storage": "512GB | 12GB", "Color": "Black" },
+          "price": 1099.99,
+          "images": ["https://i01.appmifile.com/webfile/globalimg/202212/1-BK.jpg"]
+        }
+      ]
+    }
+  ]
+}
