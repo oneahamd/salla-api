@@ -524,5 +524,46 @@
         }
       ]
     }
-  ]
+  ],
+  "categories": [
+    {
+      "id": "1",
+      "name": "Smartphones",
+      "slug": "smartphones",
+      "description": "Latest smartphones and mobile devices"
+    }
+  ],
+  "orders": [
+    {
+      "id": "23127",
+      "user_id": "1",
+      "created_at": "2024-01-15T10:30:00Z",
+      "total": 1120.0,
+      "status": "Processing",
+      "shipping_info": {
+        "fullName": "أحمد محمد",
+        "phone": "+966501234567",
+        "address": "شارع الملك فهد",
+        "city": "الرياض",
+        "country": "السعودية"
+      },
+      "order_items": [
+        {
+          "id": "1",
+          "order_id": "23127",
+          "product_id": "1",
+          "quantity": 1,
+          "price": 1000,
+          "variant": {
+            "Storage": "512GB | 12GB",
+            "Color": "Floral White"
+          }
+        }
+      ]
+    }
+  ],
+  "cart": [],
+  "users": [],
+  "reviews": []
+}
 }
