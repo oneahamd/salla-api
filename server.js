@@ -4,6 +4,20 @@ const server = jsonServer.create();
 const router = jsonServer.router('db.json');
 const middlewares = jsonServer.defaults();
 const bodyParser = jsonServer.bodyParser;
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 server.use(middlewares);
 server.use(bodyParser);
@@ -69,6 +83,156 @@ server.get('/orders/stats', (req, res) => {
     delivered: counts.delivered || 0,
     canceled: counts.canceled || 0,
   });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// قاعدة بيانات وهمية (في الإنتاج استخدم قاعدة بيانات حقيقية)
+let users = [];
+
+// Middleware للتحقق من التوكن
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Access token required' });
+  }
+  
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// تسجيل حساب جديد
+app.post('/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    
+    // التحقق من البيانات المطلوبة
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+    
+    // التحقق من وجود المستخدم
+    const existingUser = users.find(user => user.email === email);
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+    
+    // تشفير كلمة المرور
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // إنشاء المستخدم الجديد
+    const newUser = {
+      id: uuidv4(),
+      name,
+      email,
+      phone: phone || null,
+      password: hashedPassword,
+      created_at: new Date().toISOString(),
+    };
+    
+    users.push(newUser);
+    
+    // إنشاء التوكن
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // إرسال الاستجابة (بدون كلمة المرور)
+    const { password: _, ...userWithoutPassword } = newUser;
+    res.status(201).json({
+      user: userWithoutPassword,
+      token,
+    });
+    
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// تسجيل الدخول
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // التحقق من البيانات المطلوبة
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    
+    // البحث عن المستخدم
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // التحقق من كلمة المرور
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // إنشاء التوكن
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // إرسال الاستجابة (بدون كلمة المرور)
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({
+      user: userWithoutPassword,
+      token,
+    });
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// التحقق من صحة التوكن
+app.get('/auth/verify', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ user: userWithoutPassword });
+    
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// تسجيل الخروج
+app.post('/auth/logout', authenticateToken, (req, res) => {
+  // في التطبيق الحقيقي، يمكنك إضافة التوكن إلى قائمة سوداء
+  res.json({ message: 'Logged out successfully' });
+});
+
+// الحصول على جميع المستخدمين (للاختبار فقط)
+app.get('/users', authenticateToken, (req, res) => {
+  const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+  res.json(usersWithoutPasswords);
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
 // باقي الـ routes الافتراضية (GET/DELETE/pagination)
