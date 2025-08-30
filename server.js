@@ -11,7 +11,110 @@ const middlewares = jsonServer.defaults();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// إضافة REFRESH_SECRET في أعلى الملف
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const REFRESH_SECRET = process.env.REFRESH_SECRET || 'your-refresh-secret-key';
+
+// تخزين refresh tokens (في الإنتاج استخدم قاعدة بيانات)
+let refreshTokens = [];
+
+// إصلاح دالة تسجيل الدخول
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = users.find((u) => u.email === email);
+    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return res.status(401).json({ message: 'Invalid email or password' });
+
+    // إنشاء access token قصير المدى + refresh token طويل المدى
+    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '7d' });
+    
+    // حفظ refresh token
+    refreshTokens.push(refreshToken);
+    
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ 
+      user: userWithoutPassword, 
+      accessToken, 
+      refreshToken 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// إصلاح دالة التسجيل
+app.post('/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+    const existingUser = users.find((u) => u.email === email);
+    if (existingUser) return res.status(400).json({ message: 'User already exists' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = {
+      id: uuidv4(),
+      name,
+      email,
+      phone: phone || null,
+      password: hashedPassword,
+      created_at: new Date().toISOString(),
+    };
+    users.push(newUser);
+
+    const accessToken = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: '7d' });
+    
+    // حفظ refresh token
+    refreshTokens.push(refreshToken);
+    
+    const { password: _, ...userWithoutPassword } = newUser;
+    res.status(201).json({ 
+      user: userWithoutPassword, 
+      accessToken, 
+      refreshToken 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// إضافة endpoint لتجديد التوكن
+app.post('/auth/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+  
+  if (!refreshToken) {
+    return res.status(401).json({ message: 'Refresh token required' });
+  }
+  
+  if (!refreshTokens.includes(refreshToken)) {
+    return res.status(403).json({ message: 'Invalid refresh token' });
+  }
+  
+  jwt.verify(refreshToken, REFRESH_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid refresh token' });
+    
+    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+    res.json({ accessToken });
+  });
+});
+
+// تحديث دالة تسجيل الخروج لحذف refresh token
+app.post('/auth/logout', authenticateToken, (req, res) => {
+  const { refreshToken } = req.body;
+  
+  // حذف refresh token من القائمة
+  if (refreshToken) {
+    refreshTokens = refreshTokens.filter(token => token !== refreshToken);
+  }
+  
+  res.json({ message: 'Logged out successfully' });
+});
 
 // Middleware
 app.use(cors());
@@ -41,14 +144,23 @@ app.post('/auth/register', async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
-    const existingUser = users.find(u => u.email === email);
+    const existingUser = users.find((u) => u.email === email);
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = { id: uuidv4(), name, email, phone: phone || null, password: hashedPassword, created_at: new Date().toISOString() };
+    const newUser = {
+      id: uuidv4(),
+      name,
+      email,
+      phone: phone || null,
+      password: hashedPassword,
+      created_at: new Date().toISOString(),
+    };
     users.push(newUser);
 
-    const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, {
+      expiresIn: '7d',
+    });
     const { password: _, ...userWithoutPassword } = newUser;
     res.status(201).json({ user: userWithoutPassword, token });
   } catch (err) {
@@ -59,13 +171,15 @@ app.post('/auth/register', async (req, res) => {
 app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = users.find(u => u.email === email);
+    const user = users.find((u) => u.email === email);
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ message: 'Invalid email or password' });
 
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    // إنشاء access token قصير المدى + refresh token طويل المدى
+    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '7d' });
     const { password: _, ...userWithoutPassword } = user;
     res.json({ user: userWithoutPassword, token });
   } catch (err) {
@@ -74,7 +188,7 @@ app.post('/auth/login', async (req, res) => {
 });
 
 app.get('/auth/verify', authenticateToken, (req, res) => {
-  const user = users.find(u => u.id === req.user.id);
+  const user = users.find((u) => u.id === req.user.id);
   if (!user) return res.status(404).json({ message: 'User not found' });
   const { password: _, ...userWithoutPassword } = user;
   res.json({ user: userWithoutPassword });
@@ -91,7 +205,7 @@ app.get('/users', authenticateToken, (req, res) => {
 app.delete('/auth/remove', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
-    const idx = users.findIndex(u => u.id === userId);
+    const idx = users.findIndex((u) => u.id === userId);
     if (idx === -1) return res.status(404).json({ message: 'User not found' });
 
     // احذف المستخدم
@@ -101,7 +215,10 @@ app.delete('/auth/remove', authenticateToken, (req, res) => {
     const db = router.db;
     if (db) {
       // لو تستخدم json-server و orders عندك
-      const orders = db.get('orders').remove(o => o.user_id === userId).write();
+      const orders = db
+        .get('orders')
+        .remove((o) => o.user_id === userId)
+        .write();
     }
 
     // أيضًا لغي التوكن الحالي لو فيه
@@ -114,7 +231,6 @@ app.delete('/auth/remove', authenticateToken, (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 // ✅ Routes مخصصة
 app.put('/products/:id', (req, res) => {
@@ -162,3 +278,25 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
 
+// إضافة rate limiting
+const rateLimit = require('express-rate-limit');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 دقيقة
+  max: 5, // 5 محاولات كحد أقصى
+  message: 'Too many login attempts, please try again later.',
+});
+
+app.use('/auth/login', authLimiter);
+app.use('/auth/register', authLimiter);
+
+// إضافة تحقق أقوى من البريد الإلفتروني
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(email)) {
+  return res.status(400).json({ message: 'Invalid email format' });
+}
+
+// تحقق من قوة كلمة المرور
+if (password.length < 6) {
+  return res.status(400).json({ message: 'Password must be at least 6 characters' });
+}
