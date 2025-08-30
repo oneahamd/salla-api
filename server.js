@@ -1,133 +1,65 @@
 // server.js
-const jsonServer = require('json-server');
 const express = require('express');
+const jsonServer = require('json-server');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
+const app = express();
 const router = jsonServer.router('db.json');
 const middlewares = jsonServer.defaults();
 
-const app = express();
 const PORT = process.env.PORT || 3000;
-// إضافة REFRESH_SECRET في أعلى الملف
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const REFRESH_SECRET = process.env.REFRESH_SECRET || 'your-refresh-secret-key';
 
-// تخزين refresh tokens (في الإنتاج استخدم قاعدة بيانات)
-let refreshTokens = [];
+// -- In-memory stores (استبدل بقاعدة بيانات في الإنتاج)
+let users = [];
+let refreshTokens = []; // في الإنتاج خزّنها في DB ويفضل أن تكون مُجزّأة أو مؤمنة
 
-// إصلاح دالة تسجيل الدخول
-app.post('/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = users.find((u) => u.email === email);
-    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ message: 'Invalid email or password' });
-
-    // إنشاء access token قصير المدى + refresh token طويل المدى
-    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '7d' });
-    
-    // حفظ refresh token
-    refreshTokens.push(refreshToken);
-    
-    const { password: _, ...userWithoutPassword } = user;
-    res.json({ 
-      user: userWithoutPassword, 
-      accessToken, 
-      refreshToken 
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// إصلاح دالة التسجيل
-app.post('/auth/register', async (req, res) => {
-  try {
-    const { name, email, password, phone } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
-    }
-    const existingUser = users.find((u) => u.email === email);
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
-      id: uuidv4(),
-      name,
-      email,
-      phone: phone || null,
-      password: hashedPassword,
-      created_at: new Date().toISOString(),
-    };
-    users.push(newUser);
-
-    const accessToken = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: newUser.id }, REFRESH_SECRET, { expiresIn: '7d' });
-    
-    // حفظ refresh token
-    refreshTokens.push(refreshToken);
-    
-    const { password: _, ...userWithoutPassword } = newUser;
-    res.status(201).json({ 
-      user: userWithoutPassword, 
-      accessToken, 
-      refreshToken 
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// إضافة endpoint لتجديد التوكن
-app.post('/auth/refresh', (req, res) => {
-  const { refreshToken } = req.body;
-  
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'Refresh token required' });
-  }
-  
-  if (!refreshTokens.includes(refreshToken)) {
-    return res.status(403).json({ message: 'Invalid refresh token' });
-  }
-  
-  jwt.verify(refreshToken, REFRESH_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid refresh token' });
-    
-    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
-    res.json({ accessToken });
-  });
-});
-
-// تحديث دالة تسجيل الخروج لحذف refresh token
-app.post('/auth/logout', authenticateToken, (req, res) => {
-  const { refreshToken } = req.body;
-  
-  // حذف refresh token من القائمة
-  if (refreshToken) {
-    refreshTokens = refreshTokens.filter(token => token !== refreshToken);
-  }
-  
-  res.json({ message: 'Logged out successfully' });
-});
-
-// Middleware
+// -- Middleware أساسي (ضعهم قبل أي route يستخدم req.body أو الحماية)
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(middlewares);
 
-// قاعدة بيانات وهمية (في الإنتاج استخدم قاعدة بيانات حقيقية)
-let users = [];
+// -- Rate limiter (طبق قبل الـ auth routes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 دقيقة
+  max: 5, // عدد المحاولات المسموح بها
+  message: { message: 'Too many requests, please try again later.' },
+});
 
-// Middleware للتحقق من التوكن
+app.use('/auth/login', authLimiter);
+app.use('/auth/register', authLimiter);
+
+// -- Helpers
+const generateAccessToken = (payload) => jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
+const generateRefreshToken = (payload) => jwt.sign(payload, REFRESH_SECRET, { expiresIn: '7d' });
+
+const revokeRefreshToken = (token) => {
+  refreshTokens = refreshTokens.filter(t => t !== token);
+};
+
+const revokeAllRefreshTokensForUser = (userId) => {
+  refreshTokens = refreshTokens.filter(t => {
+    try {
+      const decoded = jwt.verify(t, REFRESH_SECRET);
+      return decoded.id !== userId;
+    } catch (e) {
+      // إذا التوكن غير صالح => نتخلص منه
+      return false;
+    }
+  });
+};
+
+// -- Middleware للتحقق من access token
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
   if (!token) return res.status(401).json({ message: 'Access token required' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -137,13 +69,26 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// ✅ Auth Routes
+// -- Validators بسيطة
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isStrongEnoughPassword = (pwd) => typeof pwd === 'string' && pwd.length >= 6;
+
+// ------------------- Auth Routes -------------------
+
+// تسجيل
 app.post('/auth/register', async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+    if (!isStrongEnoughPassword(password)) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
     const existingUser = users.find((u) => u.email === email);
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
@@ -158,81 +103,119 @@ app.post('/auth/register', async (req, res) => {
     };
     users.push(newUser);
 
-    const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, {
-      expiresIn: '7d',
-    });
-    const { password: _, ...userWithoutPassword } = newUser;
-    res.status(201).json({ user: userWithoutPassword, token });
+    const accessToken = generateAccessToken({ id: newUser.id, email: newUser.email });
+    const refreshToken = generateRefreshToken({ id: newUser.id, email: newUser.email });
+    refreshTokens.push(refreshToken);
+
+    const { password: pw, ...userWithoutPassword } = newUser;
+    res.status(201).json({ user: userWithoutPassword, accessToken, refreshToken });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
+// تسجيل الدخول
 app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+
     const user = users.find((u) => u.email === email);
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ message: 'Invalid email or password' });
 
-    // إنشاء access token قصير المدى + refresh token طويل المدى
-    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '7d' });
-    const { password: _, ...userWithoutPassword } = user;
-    res.json({ user: userWithoutPassword, token });
+    const accessToken = generateAccessToken({ id: user.id, email: user.email });
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
+    refreshTokens.push(refreshToken);
+
+    const { password: pw, ...userWithoutPassword } = user;
+    res.json({ user: userWithoutPassword, accessToken, refreshToken });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
+// تجديد الـ access token (مع تدوير refresh token - optional)
+app.post('/auth/refresh', (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(401).json({ message: 'Refresh token required' });
+
+    if (!refreshTokens.includes(refreshToken)) return res.status(403).json({ message: 'Invalid refresh token' });
+
+    jwt.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
+      if (err) return res.status(403).json({ message: 'Invalid refresh token' });
+
+      // إنشاء access جديد (ولـ refresh جديد - token rotation)
+      const accessToken = generateAccessToken({ id: decoded.id, email: decoded.email });
+      const newRefreshToken = generateRefreshToken({ id: decoded.id, email: decoded.email });
+
+      // استبدال الـ refresh القديم بالـ refresh الجديد
+      revokeRefreshToken(refreshToken);
+      refreshTokens.push(newRefreshToken);
+
+      res.json({ accessToken, refreshToken: newRefreshToken });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// تسجيل الخروج: يحذف refresh token من المخزن
+app.post('/auth/logout', authenticateToken, (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) revokeRefreshToken(refreshToken);
+    // (اختياري) احذف كل توكنات المستخدم:
+    // revokeAllRefreshTokensForUser(req.user.id);
+    res.json({ message: 'Logged out successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// تحقق من التوكن (مثال)
 app.get('/auth/verify', authenticateToken, (req, res) => {
   const user = users.find((u) => u.id === req.user.id);
   if (!user) return res.status(404).json({ message: 'User not found' });
-  const { password: _, ...userWithoutPassword } = user;
-  res.json({ user: userWithoutPassword });
+  const { password, ...u } = user;
+  res.json({ user: u });
 });
 
-app.post('/auth/logout', authenticateToken, (req, res) => {
-  res.json({ message: 'Logged out successfully' });
-});
-
-app.get('/users', authenticateToken, (req, res) => {
-  res.json(users.map(({ password, ...u }) => u));
-});
-
+// حذف الحساب (يتطلب authentication)
 app.delete('/auth/remove', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
     const idx = users.findIndex((u) => u.id === userId);
     if (idx === -1) return res.status(404).json({ message: 'User not found' });
 
-    // احذف المستخدم
     users.splice(idx, 1);
 
-    // (اختياري) احذف بيانات مرتبطة مثل الطلبات
+    // حذف أو إلغاء توكنات الريفرش الخاصة بالمستخدم
+    revokeAllRefreshTokensForUser(userId);
+
+    // حذف بيانات مرتبطة في json-server db (إن وُجد)
     const db = router.db;
     if (db) {
-      // لو تستخدم json-server و orders عندك
-      const orders = db
-        .get('orders')
-        .remove((o) => o.user_id === userId)
-        .write();
+      db.get('orders').remove(o => o.user_id === userId).write();
     }
 
-    // أيضًا لغي التوكن الحالي لو فيه
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.split(' ')[1];
-    if (token) revokeToken(token);
-
+    // محاولة إبطال الـ access token الحالي (بما أننا نعتمد JWT غير قابل للإبطال بدون قائمة سوداء،
+    // فالأفضل أن نحتفظ بقائمة revoked tokens أو نعتمد صلاحية قصيرة ونعطل الـ refresh tokens كما فعلنا)
     res.json({ message: 'Account deleted successfully' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// ✅ Routes مخصصة
+// مثال routes مخصصة للـ products و orders (تستخدم json-server DB)
 app.put('/products/:id', (req, res) => {
   const db = router.db;
   const product = db.get('products').find({ id: req.params.id }).assign(req.body).write();
@@ -270,33 +253,15 @@ app.get('/orders/stats', (req, res) => {
   });
 });
 
-// ✅ باقي الـ routes الافتراضية
+// قائمة المستخدمين (محمية)
+app.get('/users', authenticateToken, (req, res) => {
+  res.json(users.map(({ password, ...u }) => u));
+});
+
+// أخيراً: ربط json-server router (ضع هذا آخر شيء)
 app.use(router);
 
 // تشغيل السيرفر
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
-
-// إضافة rate limiting
-const rateLimit = require('express-rate-limit');
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 دقيقة
-  max: 5, // 5 محاولات كحد أقصى
-  message: 'Too many login attempts, please try again later.',
-});
-
-app.use('/auth/login', authLimiter);
-app.use('/auth/register', authLimiter);
-
-// إضافة تحقق أقوى من البريد الإلفتروني
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (!emailRegex.test(email)) {
-  return res.status(400).json({ message: 'Invalid email format' });
-}
-
-// تحقق من قوة كلمة المرور
-if (password.length < 6) {
-  return res.status(400).json({ message: 'Password must be at least 6 characters' });
-}
