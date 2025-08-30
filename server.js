@@ -88,6 +88,34 @@ app.get('/users', authenticateToken, (req, res) => {
   res.json(users.map(({ password, ...u }) => u));
 });
 
+app.delete('/auth/remove', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return res.status(404).json({ message: 'User not found' });
+
+    // احذف المستخدم
+    users.splice(idx, 1);
+
+    // (اختياري) احذف بيانات مرتبطة مثل الطلبات
+    const db = router.db;
+    if (db) {
+      // لو تستخدم json-server و orders عندك
+      const orders = db.get('orders').remove(o => o.user_id === userId).write();
+    }
+
+    // أيضًا لغي التوكن الحالي لو فيه
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.split(' ')[1];
+    if (token) revokeToken(token);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 // ✅ Routes مخصصة
 app.put('/products/:id', (req, res) => {
   const db = router.db;
@@ -133,3 +161,4 @@ app.use(router);
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
+
