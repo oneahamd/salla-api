@@ -564,5 +564,6 @@
   ],
   "cart": [],
   "users": [],
+  "refreshTokens": [],
   "reviews": []
 }
