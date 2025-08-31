@@ -41,11 +41,11 @@ const generateAccessToken = (payload) => jwt.sign(payload, JWT_SECRET, { expires
 const generateRefreshToken = (payload) => jwt.sign(payload, REFRESH_SECRET, { expiresIn: '7d' });
 
 const revokeRefreshToken = (token) => {
-  refreshTokens = refreshTokens.filter(t => t !== token);
+  refreshTokens = refreshTokens.filter((t) => t !== token);
 };
 
 const revokeAllRefreshTokensForUser = (userId) => {
-  refreshTokens = refreshTokens.filter(t => {
+  refreshTokens = refreshTokens.filter((t) => {
     try {
       const decoded = jwt.verify(t, REFRESH_SECRET);
       return decoded.id !== userId;
@@ -70,8 +70,8 @@ const authenticateToken = (req, res, next) => {
 };
 
 // -- Validators بسيطة
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const isStrongEnoughPassword = (pwd) => typeof pwd === 'string' && pwd.length >= 6;
+// const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// const isStrongEnoughPassword = (pwd) => typeof pwd === 'string' && pwd.length >= 6;
 
 // ------------------- Auth Routes -------------------
 
@@ -79,35 +79,63 @@ const isStrongEnoughPassword = (pwd) => typeof pwd === 'string' && pwd.length >=
 app.post('/auth/register', async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+    
+    // التحقق من وجود الاسم وكلمة المرور
+    if (!name || !password) {
+      return res.status(400).json({ message: 'Name and password are required' });
     }
-    if (!emailRegex.test(email)) {
+    
+    // التحقق من وجود إيميل أو هاتف على الأقل
+    if (!email && !phone) {
+      return res.status(400).json({ message: 'Either email or phone number is required' });
+    }
+    
+    // التحقق من صحة الإيميل إذا وُجد
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ message: 'Invalid email format' });
     }
-    if (!isStrongEnoughPassword(password)) {
+    
+    // التحقق من صحة الهاتف إذا وُجد
+    if (phone && !/^[+]?[0-9]{10,15}$/.test(phone.replace(/\s/g, ''))) {
+      return res.status(400).json({ message: 'Invalid phone number format' });
+    }
+    
+    if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
+    if (name.length < 3) {
+      return res.status(400).json({ message: 'Name must be at least 3 characters' });
+    }
 
-    const existingUser = users.find((u) => u.email === email);
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
+    // التحقق من عدم وجود مستخدم بنفس الإيميل أو الهاتف
+    if (email) {
+      const existingEmail = users.findOne({ email });
+      if (existingEmail)
+        return res.status(400).json({ message: 'User with this email already exists' });
+    }
+    
+    if (phone) {
+      const existingPhone = users.findOne({ phone });
+      if (existingPhone)
+        return res.status(400).json({ message: 'User with this phone already exists' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
+    const user = {
       id: uuidv4(),
       name,
-      email,
+      email: email || null,
       phone: phone || null,
       password: hashedPassword,
       created_at: new Date().toISOString(),
     };
-    users.push(newUser);
+    users.push(user);
 
-    const accessToken = generateAccessToken({ id: newUser.id, email: newUser.email });
-    const refreshToken = generateRefreshToken({ id: newUser.id, email: newUser.email });
+    const accessToken = generateAccessToken({ id: user.id, email: user.email, phone: user.phone });
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, phone: user.phone });
     refreshTokens.push(refreshToken);
 
-    const { password: pw, ...userWithoutPassword } = newUser;
+    const { password: pw, ...userWithoutPassword } = user;
     res.status(201).json({ user: userWithoutPassword, accessToken, refreshToken });
   } catch (err) {
     console.error(err);
@@ -118,17 +146,19 @@ app.post('/auth/register', async (req, res) => {
 // تسجيل الدخول
 app.post('/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+    const { identifier, password } = req.body;
+    if (!identifier || !password)
+      return res.status(400).json({ message: 'Email/Phone and password required' });
 
-    const user = users.find((u) => u.email === email);
-    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+    // البحث عن المستخدم بالإيميل أو الهاتف
+    const user = users.find((u) => u.email === identifier || u.phone === identifier);
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
     const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ message: 'Invalid email or password' });
+    if (!isValid) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const accessToken = generateAccessToken({ id: user.id, email: user.email });
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
+    const accessToken = generateAccessToken({ id: user.id, email: user.email, phone: user.phone });
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, phone: user.phone });
     refreshTokens.push(refreshToken);
 
     const { password: pw, ...userWithoutPassword } = user;
@@ -145,7 +175,8 @@ app.post('/auth/refresh', (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(401).json({ message: 'Refresh token required' });
 
-    if (!refreshTokens.includes(refreshToken)) return res.status(403).json({ message: 'Invalid refresh token' });
+    if (!refreshTokens.includes(refreshToken))
+      return res.status(403).json({ message: 'Invalid refresh token' });
 
     jwt.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
       if (err) return res.status(403).json({ message: 'Invalid refresh token' });
@@ -203,7 +234,9 @@ app.delete('/auth/remove', authenticateToken, (req, res) => {
     // حذف بيانات مرتبطة في json-server db (إن وُجد)
     const db = router.db;
     if (db) {
-      db.get('orders').remove(o => o.user_id === userId).write();
+      db.get('orders')
+        .remove((o) => o.user_id === userId)
+        .write();
     }
 
     // محاولة إبطال الـ access token الحالي (بما أننا نعتمد JWT غير قابل للإبطال بدون قائمة سوداء،
